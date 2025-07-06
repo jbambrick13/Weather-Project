@@ -1,1 +1,113 @@
+# Import necessary libraries
+import requests
+import psycopg2
+import datetime
 
+# Configure database and API settings
+API_KEY = "Your_API_Key_Here"  # Replace with your actual OpenWeatherMap API key
+DB_PASSWORD = "Your_Pass_Here!" # Replace with your actual PostgreSQL password
+DB_HOST = "localhost"
+DB_PORT = "5432"
+DB_NAME = "weather_db"
+DB_USER = "postgres"
+API_URL = "https://api.openweathermap.org/data/2.5/weather"
+
+# List of cities with their coordinates
+CITIES = [
+    {"name": "New York City", "country": "USA", "lat": 40.71, "lon": -74.01},
+    {"name": "Atlanta", "country": "USA", "lat": 33.75, "lon": -84.39},
+    {"name": "Seattle", "country": "USA", "lat": 47.61, "lon": -122.33},
+    {"name": "Los Angeles", "country": "USA", "lat": 34.05, "lon": -118.24},
+    {"name": "Boston", "country": "USA", "lat": 42.36, "lon": -71.06},
+]
+
+# Function to fetch weather data from OpenWeatherMap API
+def fetch_weather_data(city):
+    """Fetches weather data from the OpenWeatherMap API for a given city."""
+    params = {
+        "lat": city["lat"],
+        "lon": city["lon"],
+        "appid": API_KEY,
+        "units": "metric"  # Use metric for Celsius
+    }
+    try:
+        response = requests.get(API_URL, params=params)
+        response.raise_for_status()  # Raise an error for bad responses
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data for {city['name']}: {e}")
+        return None
+
+# Function to insert weather data into PostgreSQL database
+def insert_data_to_db(data):
+    """Connects to the PostgreSQL database and inserts one weather reading."""
+    # Initialize connection variable
+    conn = None
+    try:
+        # Establish connection
+        conn = psycopg2.connect(
+            host=DB_HOST,
+            port=DB_PORT,
+            dbname=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
+        )
+        cur = conn.cursor()
+
+        # Define the SQL INSERT statement
+        sql = """
+            INSERT INTO weather_data (
+                city, country, reading_timestamp, temp_celsius, total_precip, weather_conditions
+            ) VALUES (%s, %s, %s, %s, %s, %s);
+        """
+        
+        # Execute the command
+        cur.execute(sql, (
+            data['city'],
+            data['country'],
+            data['timestamp'],
+            data['temp_celsius'],
+            data['total_precip'],
+            data['weather_conditions']
+        ))
+        
+        # Commit the transaction
+        conn.commit()
+        cur.close()
+        print(f"Successfully inserted data for {data['city']}.")
+
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(f"Database error: {error}")
+    finally:
+        if conn is not None:
+            conn.close()
+
+# Main function to orchestrate the weather data scraping and storage
+def main():
+    """Main function to orchestrate the fetching and storing of weather data."""
+    print("Starting weather data scrape...")
+    for city in CITIES:
+        weather_json = fetch_weather_data(city)
+        
+        if weather_json:
+            # Extract and transform data
+            # Safely get rain and snow data, defaulting to 0 if not present
+            rain_mm = weather_json.get('rain', {}).get('1h', 0)
+            snow_mm = weather_json.get('snow', {}).get('1h', 0)
+            
+            processed_data = {
+                'city': city['name'],
+                'country': city['country'],
+                'timestamp': datetime.now(),
+                'temp_celsius': weather_json['main']['temp'],
+                'total_precip': rain_mm + snow_mm,
+                'weather_conditions': weather_json['weather'][0]['description']
+            }
+            
+            # Insert the processed data into the database
+            insert_data_to_db(processed_data)
+            
+    print("Weather data scrape finished.")
+# Call the main function 
+if __name__ == "__main__":
+    main()
