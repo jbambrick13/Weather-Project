@@ -1,4 +1,4 @@
-# Weather_Project
+# Weather-Project
 This project demonstrates a data pipeline that automatically collects, stores, and visualizes real-time weather data for major US cities. The system is designed to build its own historical dataset over time, providing a foundation for trend analysis.
 
 View the Interactive Dashboard on Tableau Public
