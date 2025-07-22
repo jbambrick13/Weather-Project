@@ -1,8 +1,8 @@
 # Weather-Project
 This project demonstrates a data pipeline that automatically collects, stores, and visualizes real-time weather data for major US cities. The system is designed to build its own historical dataset over time, providing a foundation for trend analysis.
 
-View the Interactive Dashboard on Tableau Public
-(Insert link to dashboard once published.)
+View the Interactive Dashboard on Tableau Public:
+https://public.tableau.com/views/AutomatedUSCityWeatherAnalysis/Dashboard1?:language=en-US&:sid=&:redirect=auth&publish=yes&showOnboarding=true&:display_count=n&:origin=viz_share_link
 
 Key Features:
 1. **Automated Data Pipeline:** A Python script runs on a recurring schedule to fetch new data, creating a self-updating and ever-growing dataset without manual intervention.
@@ -15,10 +15,10 @@ Technologies & Skills:
 2. **Data Transformation:** Python (datetime library)
 3. **Data Storage:** PostgreSQL (SQL)
 4. **Data Visualization:** Tableau Desktop
-5. **Automation:** Windows Task Scheduler
+5. **Automation:** Time Scheduling Logic
 6. **Version Control:** Git & GitHub
 
-This project follows a classic ETL (Extract, Transform, Load) architecture:
+This project follows a classic ETLV architecture:
 1. **Extract:** A Python script, scheduled to run automatically, calls the OpenWeatherMap API to fetch current weather data for a predefined list of cities.
 2. **Transform:** The raw JSON data from the API is cleaned and structured in Python. Key transformations include combining separate rain and snow fields into a single total_precipitation metric to standardize analysis
 3. **Load:** The clean, transformed data is loaded into a weather_data table within a PostgreSQL database for persistent storage.
@@ -49,4 +49,4 @@ Replace the placeholder values for API_KEY and DB_PASSWORD with your personal Op
 
 6. Run the Pipeline:
 Execute the script from your terminal to perform the first data pull and confirm the pipeline is working.
-Once confirmed, set up a scheduled task (using Task Scheduler on Windows or cron on macOS/Linux) to run the script at your desired interval (e.g., once every hour).
+Once confirmed, edit the value in time.sleep() to configure the delay between data collection sessions.
